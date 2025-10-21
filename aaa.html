@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syntactic Strength: Nattysplitter</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Phosphor Icons for social media/UI icons -->
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    <!-- Configure Tailwind and Inter font -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-primary': '#111827',
+                        'dark-secondary': '#1F2937',
+                        'accent-red': '#DC2626',
+                        'accent-light': '#FCA5A5',
+                        'accent-green': '#10B981',
+                        'accent-blue': '#3B82F6',
+                        'danger': '#EF4444',
+                        'social-google': '#4285F4',
+                        'social-facebook': '#1877F2',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    keyframes: {
+                        pulseRed: {
+                            '0%, 100%': { 'text-shadow': '0 0 5px rgba(220, 38, 38, 0.5), 0 0 10px rgba(220, 38, 38, 0.2)' },
+                            '50%': { 'text-shadow': '0 0 10px rgba(220, 38, 38, 0.8), 0 0 20px rgba(220, 38, 38, 0.5)' },
+                        },
+                        pulseGreen: {
+                            '0%, 100%': { 'text-shadow': '0 0 5px rgba(16, 185, 129, 0.5), 0 0 10px rgba(16, 185, 129, 0.2)' },
+                            '50%': { 'text-shadow': '0 0 10px rgba(16, 185, 129, 0.8), 0 0 20px rgba(16, 185, 129, 0.5)' },
+                        },
+                        pulseBlue: {
+                            '0%, 100%': { 'text-shadow': '0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.2)' },
+                            '50%': { 'text-shadow': '0 0 10px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.5)' },
+                        }
+                    },
+                    animation: {
+                        pulseRed: 'pulseRed 2s ease-in-out infinite',
+                        pulseGreen: 'pulseGreen 2s ease-in-out infinite',
+                        pulseBlue: 'pulseBlue 2s ease-in-out infinite',
+                        loading: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        .glow-border {
+            box-shadow: 0 0 10px rgba(220, 38, 38, 0.4), 0 0 20px rgba(220, 38, 38, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glow-border:hover {
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.7), 0 0 30px rgba(220, 38, 38, 0.3);
+            transform: translateY(-2px);
+        }
+        .glow-border-green {
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4), 0 0 20px rgba(16, 185, 129, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glow-border-green:hover {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.7), 0 0 30px rgba(16, 185, 129, 0.3);
+            transform: translateY(-2px);
+        }
+        .glow-border-blue {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glow-border-blue:hover {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.7), 0 0 30px rgba(59, 130, 246, 0.3);
+            transform: translateY(-2px);
+        }
+        .motivation-card {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1.5rem;
+            background-color: #1F2937;
+            border-radius: 0.5rem;
+            border: 2px solid #DC2626;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .motivation-card:hover {
+            transform: scale(1.02);
+        }
+        .diet-card {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1.5rem;
+            background-color: #1F2937;
+            border-radius: 0.5rem;
+            border: 2px solid #10B981;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .diet-card:hover {
+            transform: scale(1.02);
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(17, 24, 39, 0.95);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+        /* Style for the new full-screen history modal */
+        #history-modal {
+            z-index: 60; /* Higher than auth modal */
+            padding: 1rem;
+        }
+        /* Updated grid for history log to include User ID/Name */
+        .history-item {
+            display: grid;
+            grid-template-columns: 1fr 100px 150px 100px; /* Name | Duration | User ID | Date */
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #374151;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #374151;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #10B981;
+            transition: width 0.5s ease;
+        }
+        .bmi-indicator {
+            height: 12px;
+            width: 100%;
+            background: linear-gradient(to right, #10B981, #F59E0B, #EF4444);
+            border-radius: 6px;
+            margin-top: 5px;
+            position: relative;
+        }
+        .bmi-marker {
+            position: absolute;
+            top: -5px;
+            width: 4px;
+            height: 22px;
+            background-color: white;
+            border-radius: 2px;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body class="bg-dark-primary text-gray-200 font-sans min-h-screen flex flex-col">
+
+    <!-- Header / Navigation Bar -->
+    <header class="p-4 md:p-6 bg-dark-secondary sticky top-0 z-10 border-b border-gray-700/50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold text-accent-red animate-pulseRed">SYNTACTIC STRENGTH</h1>
+            <nav class="hidden md:flex space-x-6 text-sm font-semibold">
+                <a href="#wod" class="hover:text-accent-red transition duration-200">WOD</a>
+                <a href="#countdown" class="hover:text-accent-red transition duration-200">Start Time</a>
+                <a href="#nutrition" class="hover:text-accent-green transition duration-200">Nutrition</a>
+                <!-- Updated button to hold user data -->
+                <button id="header-auth-btn" class="bg-accent-red text-dark-primary px-4 py-1 rounded-full font-bold hover:bg-red-400 transition duration-300 shadow-lg">REGISTER</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+
+            <!-- Hero Section / Main Title -->
+            <section class="text-center py-12 md:py-24">
+                <h2 class="text-5xl md:text-7xl font-black uppercase tracking-tight text-white mb-4 leading-tight">
+                    <span class="text-accent-red">Natty</span>splitter
+                </h2>
+                <p class="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto">
+                    The ultimate trial of skill, precision, and digital endurance. Are you ready to train for victory?
+                </p>
+            </section>
+
+            <!-- Competition Countdown -->
+            <section id="countdown" class="mb-16 md:mb-24 p-6 md:p-10 bg-dark-secondary rounded-xl glow-border">
+                <h3 class="text-center text-3xl font-bold text-white mb-8 uppercase tracking-widest">
+                    YOU CAN SEE YOUR CHANGES IN...
+                </h3>
+                
+                <!-- Countdown Duration Selector -->
+                <div class="flex justify-center mb-6">
+                    <div class="bg-dark-primary p-4 rounded-lg">
+                        <label for="countdown-duration" class="block text-sm font-medium text-gray-400 mb-2 text-center">Countdown Duration</label>
+                        <select id="countdown-duration" class="w-full p-2 rounded-lg bg-dark-secondary border border-gray-600 text-white focus:ring-accent-red focus:border-accent-red">
+                            <option value="91">91 Days</option>
+                            <option value="92">92 Days</option>
+                            <option value="93">93 Days</option>
+                            <option value="94">94 Days</option>
+                            <option value="95">95 Days</option>
+                            <option value="96">96 Days</option>
+                            <option value="97">97 Days</option>
+                            <option value="98">98 Days</option>
+                            <option value="99">99 Days</option>
+                            <option value="100" selected>100 Days</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="timer-display" class="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-8 text-center">
+                    <!-- Timer blocks will be populated by JavaScript -->
+                </div>
+            </section>
+            
+            <!-- Updated Workout of the Day (WOD) Section - Physical Reps -->
+            <section id="wod" class="mb-16 md:mb-24 p-6 md:p-10 bg-dark-secondary rounded-xl glow-border">
+                <h3 class="text-center text-3xl font-bold text-accent-red mb-6 uppercase tracking-widest">
+                    Workout of the Day (WOD) - Maximum Effort
+                </h3>
+                <div class="max-w-4xl mx-auto">
+                    <!-- Filters Section -->
+                    <div class="flex flex-col md:flex-row gap-4 mb-4 justify-center">
+                        <div>
+                            <label for="body-part-filter" class="block text-sm font-medium text-gray-400 mb-1">Target Body Part</label>
+                            <select id="body-part-filter" class="w-full md:w-48 p-2 rounded-lg bg-dark-primary border border-gray-600 text-white focus:ring-accent-red focus:border-accent-red">
+                                <!-- Options populated by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="equipment-filter" class="block text-sm font-medium text-gray-400 mb-1">Available Equipment</label>
+                            <select id="equipment-filter" class="w-full md:w-48 p-2 rounded-lg bg-dark-primary border border-gray-600 text-white focus:ring-accent-red focus:border-accent-red">
+                                <!-- Options populated by JS -->
+                            </select>
+                        </div>
+                        <!-- Buttons Section -->
+                        <div class="md:self-end flex flex-col space-y-2">
+                            <button id="generate-wod-btn" class="w-full md:w-auto mt-4 md:mt-0 bg-accent-light text-dark-primary px-6 py-2.5 rounded-lg font-bold hover:bg-red-300 transition duration-300 shadow-lg uppercase text-sm">
+                                Generate Quick Rep
+                            </button>
+                            <!-- VIEW HISTORY BUTTON - Stays the same -->
+                            <button id="view-history-btn" class="w-full md:w-auto bg-gray-500 text-dark-primary px-6 py-2.5 rounded-lg font-black hover:bg-gray-400 transition duration-300 shadow-lg uppercase text-sm disabled:opacity-50">
+                                📜 Public Workout Log
+                            </button>
+                        </div>
+                        <!-- AI Trainer button remains -->
+                         <div class="md:self-end flex flex-col space-y-2">
+                             <button id="get-ai-plan-btn" class="w-full md:w-auto mt-4 md:mt-0 bg-accent-red text-dark-primary px-6 py-2.5 rounded-lg font-black hover:bg-red-400 transition duration-300 shadow-lg uppercase text-sm disabled:opacity-50">
+                                ✨ Get AI Trainer's Plan
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- API Message Area -->
+                    <p id="api-message" class="text-center text-sm text-gray-400 mb-4 h-5 animate-loading" style="display: none;">Loading...</p>
+
+                    <!-- Workout Display Area -->
+                    <div class="grid md:grid-cols-5 gap-6 p-6 bg-dark-primary rounded-xl border border-accent-red/50">
+                        
+                        <!-- Col 1-3: Workout Details -->
+                        <div class="md:col-span-3">
+                            <p id="exercise-equipment" class="text-base font-semibold text-accent-light mb-2 uppercase">
+                                --
+                            </p>
+                            <h4 id="exercise-name" class="text-3xl md:text-4xl font-extrabold text-accent-red mb-3">
+                                Select Your Filters
+                            </h4>
+                            <p id="exercise-details" class="text-lg text-gray-300 whitespace-pre-line mb-4">
+                                Choose your desired focus and available equipment, then click 'Generate Quick Rep' for a simple workout, or the 'AI Trainer's Plan' for a custom, detailed routine!
+                            </p>
+                            
+                            <!-- Timer Controls and Selector -->
+                            <div class="space-y-3 mt-4">
+                                <!-- Duration Selector -->
+                                <div>
+                                    <label for="set-duration-select" class="block text-xs font-semibold text-gray-400 mb-1 uppercase">Set Duration</label>
+                                    <select id="set-duration-select" class="w-full md:w-48 p-2 rounded-lg bg-dark-secondary border border-gray-600 text-white focus:ring-accent-red focus:border-accent-red text-sm">
+                                        <option value="30">30 Seconds</option>
+                                        <option value="60" selected>1 Minute (60s)</option>
+                                        <option value="90">1 Minute 30 Seconds (90s)</option>
+                                        <option value="120">2 Minutes (120s)</option>
+                                        <option value="180">3 Minutes (180s)</option>
+                                        <option value="240">4 Minutes (240s)</option>
+                                        <option value="300">5 Minutes (300s)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Start/Stop Buttons in a Row -->
+                                <div class="flex space-x-4">
+                                    <button id="start-workout-set-btn" class="flex-1 bg-accent-red text-dark-primary px-6 py-3 rounded-lg font-black uppercase hover:bg-red-400 transition duration-300 shadow-xl disabled:opacity-50">
+                                        START
+                                    </button>
+                                    <button id="stop-workout-set-btn" disabled class="flex-1 bg-gray-600 text-dark-primary px-6 py-3 rounded-lg font-black uppercase hover:bg-gray-500 transition duration-300 shadow-xl disabled:opacity-50">
+                                        PAUSE
+                                    </button>
+                                </div>
+
+                                <!-- Reset Button -->
+                                <button id="reset-workout-set-btn" class="w-full bg-dark-primary text-accent-light border border-accent-light/50 px-6 py-3 rounded-lg font-semibold uppercase hover:bg-dark-secondary transition duration-300 shadow-xl disabled:opacity-50">
+                                    RESET TIMER
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Col 4-5: Motivation and Timer -->
+                        <div class="md:col-span-2 space-y-4">
+                            <!-- Motivation Card Area -->
+                            <div id="motivation-card" class="motivation-card">
+                                <p class="text-xl font-bold text-accent-light">
+                                    "Initialize Your Workout."
+                                </p>
+                            </div>
+
+                            <!-- Timer Display -->
+                            <div class="text-center bg-dark-secondary p-3 rounded-lg border border-accent-light/50">
+                                <p class="text-sm uppercase tracking-widest text-gray-400">Set Timer (Variable)</p>
+                                <div id="set-timer-display" class="text-5xl font-extrabold text-accent-red leading-none">
+                                    01:00
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Nutrition Section -->
+            <section id="nutrition" class="mb-16 md:mb-24 p-6 md:p-10 bg-dark-secondary rounded-xl glow-border-green">
+                <h3 class="text-center text-3xl font-bold text-accent-green mb-6 uppercase tracking-widest">
+                    Nutrition & Diet Planning
+                </h3>
+                <div class="max-w-4xl mx-auto">
+                    <!-- Nutrition Inputs -->
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-dark-primary p-6 rounded-xl border border-accent-green/50">
+                            <h4 class="text-xl font-bold text-accent-green mb-4 text-center">Health Assessment</h4>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="weight" class="block text-sm font-medium text-gray-400 mb-1">Weight (kg)</label>
+                                    <input type="number" id="weight" class="w-full p-3 rounded-lg bg-dark-secondary border border-gray-600 text-white focus:ring-accent-green focus:border-accent-green transition" placeholder="Enter your weight">
+                                </div>
+                                <div>
+                                    <label for="height" class="block text-sm font-medium text-gray-400 mb-1">Height (cm)</label>
+                                    <input type="number" id="height" class="w-full p-3 rounded-lg bg-dark-secondary border border-gray-600 text-white focus:ring-accent-green focus:border-accent-green transition" placeholder="Enter your height">
+                                </div>
+                                <div>
+                                    <label for="age" class="block text-sm font-medium text-gray-400 mb-1">Age</label>
+                                    <input type="number" id="age" class="w-full p-3 rounded-lg bg-dark-secondary border border-gray-600 text-white focus:ring-accent-green focus:border-accent-green transition" placeholder="Enter your age">
+                                </div>
+                                <div>
+                                    <label for="gender" class="block text-sm font-medium text-gray-400 mb-1">Gender</label>
+                                    <select id="gender" class="w-full p-3 rounded-lg bg-dark-secondary border border-gray-600 text-white focus:ring-accent-green focus:border-accent-green transition">
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="activity-level" class="block text-sm font-medium text-gray-400 mb-1">Activity Level</label>
+                                    <select id="activity-level" class="w-full p-3 rounded-lg bg-dark-secondary border border-gray-600 text-white focus:ring-accent-green focus:border-accent-green transition">
+                                        <option value="1.2">Sedentary (little or no exercise)</option>
+                                        <option value="1.375">Lightly active (light exercise 1-3 days/week)</option>
+                                        <option value="1.55" selected>Moderately active (moderate exercise 3-5 days/week)</option>
+                                        <option value="1.725">Very active (hard exercise 6-7 days/week)</option>
+                                        <option value="1.9">Extra active (very hard exercise, physical job)</option>
+                                    </select>
+                                </div>
+                                
+                                <button id="calculate-calories-btn" class="w-full bg-accent-green text-dark-primary p-3 rounded-lg font-black uppercase hover:bg-green-400 transition shadow-lg mt-4">
+                                    Analyze My Health
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-dark-primary p-6 rounded-xl border border-accent-green/50">
+                            <h4 class="text-xl font-bold text-accent-green mb-4 text-center">Your Health Analysis</h4>
+                            
+                            <div id="health-analysis" class="text-center mb-6">
+                                <p class="text-gray-400">Your health analysis will appear here</p>
+                                <div id="bmi-result" class="mt-4 hidden">
+                                    <p class="text-lg font-semibold text-accent-blue">BMI: <span id="bmi-value">0</span></p>
+                                    <p id="bmi-category" class="text-sm mt-1"></p>
+                                    <div class="bmi-indicator mt-2">
+                                        <div class="bmi-marker" id="bmi-marker" style="left: 50%;"></div>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                        <span>Underweight</span>
+                                        <span>Normal</span>
+                                        <span>Overweight</span>
+                                        <span>Obese</span>
+                                    </div>
+                                </div>
+                                
+                                <div id="ideal-weight" class="mt-4 hidden">
+                                    <p class="text-lg font-semibold text-accent-blue">Ideal Weight Range</p>
+                                    <p id="ideal-weight-range" class="text-sm mt-1"></p>
+                                </div>
+                                
+                                <div id="recommendation" class="mt-4 hidden">
+                                    <p class="text-lg font-semibold text-accent-blue">Our Recommendation</p>
+                                    <p id="recommendation-text" class="text-sm mt-1"></p>
+                                </div>
+                                
+                                <div id="calorie-result" class="mt-4 hidden">
+                                    <p class="text-lg font-semibold text-accent-blue">Daily Calorie Target</p>
+                                    <div id="calorie-display" class="text-3xl font-extrabold text-accent-green mt-2">
+                                        <span id="calorie-value">0</span> kcal
+                                    </div>
+                                    <div id="macro-breakdown" class="mt-4 text-sm text-gray-300">
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <div class="bg-dark-secondary p-2 rounded">
+                                                <p class="font-semibold">Protein</p>
+                                                <p id="protein-value">0g</p>
+                                            </div>
+                                            <div class="bg-dark-secondary p-2 rounded">
+                                                <p class="font-semibold">Carbs</p>
+                                                <p id="carbs-value">0g</p>
+                                            </div>
+                                            <div class="bg-dark-secondary p-2 rounded">
+                                                <p class="font-semibold">Fat</p>
+                                                <p id="fat-value">0g</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <button id="generate-diet-btn" class="w-full bg-accent-green text-dark-primary p-3 rounded-lg font-black uppercase hover:bg-green-400 transition shadow-lg disabled:opacity-50">
+                                    Generate AI Diet Plan
+                                </button>
+                                <p id="diet-message" class="text-center text-sm text-gray-400 mt-2 h-5"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Diet Plan Display -->
+                    <div id="diet-plan-container" class="hidden">
+                        <div class="bg-dark-primary p-6 rounded-xl border border-accent-green/50">
+                            <h4 class="text-2xl font-bold text-accent-green mb-4 text-center">Your AI-Generated Diet Plan</h4>
+                            <div id="diet-plan-content" class="text-gray-300 whitespace-pre-line">
+                                <!-- Diet plan will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Diet Motivation Card -->
+                    <div class="mt-6">
+                        <div id="diet-motivation-card" class="diet-card">
+                            <p class="text-xl font-bold text-accent-green">
+                                "Nutrition is the foundation of all physical progress."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer / CTA -->
+    <footer class="p-6 bg-dark-secondary border-t border-gray-700/50 text-center">
+        <p class="text-lg font-semibold mb-3">Ready to Max Out Your Skills?</p>
+        <button id="footer-auth-btn" class="bg-accent-red text-dark-primary text-xl px-8 py-3 rounded-full font-black uppercase hover:bg-red-400 transition duration-300 shadow-xl glow-border">
+            Secure Your Spot (Register Now)
+        </button>
+        <p class="text-sm text-gray-500 mt-4">&copy; 2025 Nattysplitter. Power by Synaptic Performance.</p>
+    </footer>
+
+    <!-- Sign-In/Registration Modal (Hidden by Default) -->
+    <div id="auth-modal" class="modal-backdrop transition duration-300 ease-in-out">
+        <div class="bg-dark-secondary p-8 md:p-10 rounded-xl glow-border max-w-lg w-11/12 mx-auto relative transform transition-transform duration-300 ease-out scale-95" id="auth-modal-content">
+            <!-- Close Button -->
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-accent-red transition">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+
+            <h2 class="text-4xl font-extrabold text-accent-red mb-3 text-center">ACCESS TERMINAL</h2>
+            <p class="text-center text-gray-400 mb-8">Sign in or create your Syntactic Strength profile.</p>
+
+            <!-- Separator -->
+            <div class="flex items-center my-6">
+                <div class="flex-grow border-t border-gray-700"></div>
+                <span class="flex-shrink mx-4 text-gray-500 text-sm">ENTER YOUR CREDENTIALS</span>
+                <div class="flex-grow border-t border-gray-700"></div>
+            </div>
+
+            <!-- Full Name/Password Form -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="full-name" class="block text-sm font-medium text-gray-400 mb-1">Full Name</label>
+                    <input type="text" id="full-name" required class="w-full p-3 rounded-lg bg-dark-primary border border-gray-600 text-white focus:ring-accent-red focus:border-accent-red transition">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-400 mb-1">Password</label>
+                    <input type="password" id="password" required class="w-full p-3 rounded-lg bg-dark-primary border border-gray-600 text-white focus:ring-accent-red focus:border-accent-red transition">
+                </div>
+                
+                <button type="submit" class="w-full bg-accent-red text-dark-primary p-3 rounded-lg font-black uppercase hover:bg-red-400 transition shadow-lg mt-4">
+                    LOGIN / CREATE ACCOUNT
+                </button>
+
+                <p class="text-center text-sm text-gray-500 pt-2">
+                    <a href="#" class="hover:text-accent-light transition">Forgot Password?</a>
+                </p>
+            </form>
+
+        </div>
+    </div>
+    
+    <!-- Workout History Modal (New Feature) -->
+    <div id="history-modal" class="modal-backdrop transition duration-300 ease-in-out">
+        <div class="bg-dark-secondary p-8 md:p-10 rounded-xl glow-border max-w-4xl w-11/12 mx-auto relative transform transition-transform duration-300 ease-out scale-95" id="history-modal-content">
+            <!-- Close Button -->
+            <button id="close-history-btn" class="absolute top-4 right-4 text-gray-400 hover:text-accent-red transition">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+
+            <h2 class="text-4xl font-extrabold text-accent-red mb-6 text-center">PUBLIC WORKOUT LOG</h2>
+            <p class="text-center text-gray-400 mb-6">A real-time feed of all completed sets, open to everyone.</p>
+
+            <!-- History List Header - Updated grid columns -->
+            <div class="history-item font-bold text-gray-300 border-b-2 border-accent-red mb-2 pt-0">
+                <span class="uppercase text-sm">Workout Name</span>
+                <span class="uppercase text-sm text-center">Duration</span>
+                <span class="uppercase text-sm text-center">User (ID)</span>
+                <span class="uppercase text-sm text-center">Completed</span>
+            </div>
+
+            <!-- History List Container -->
+            <div id="workout-history-list" class="max-h-96 overflow-y-auto pr-2 space-y-2">
+                <!-- History items will be populated here -->
+                <p id="history-loading" class="text-center text-gray-500 py-8">Loading public log...</p>
+            </div>
+            
+            <p id="user-id-display" class="text-xs text-gray-600 mt-6 text-center"></p>
+
+        </div>
+    </div>
+    
+    <!-- JavaScript for Countdown Timer, WOD, and Modal -->
+    <script>
+        // --- Global Variables & Elements ---
+        let setTimerInterval = null;
+        let currentUserName = null; // Stores the user's name for personalization
+        let currentWorkoutDetails = 'Initialize Your Workout.'; // Stores the last generated workout details for the quote box
+        let currentSetDuration = 60; // Default set duration in seconds
+        let timeLeft = 60; // Current remaining time
+        let countdownInterval = null;
+        let currentCountdownDays = 100;
+        let userGoal = 'maintain'; // Default goal
+
+        const nameEl = document.getElementById('exercise-name');
+        const detailsEl = document.getElementById('exercise-details');
+        const equipmentEl = document.getElementById('exercise-equipment');
+        const motivationCardEl = document.getElementById('motivation-card');
+        const startWorkoutSetBtn = document.getElementById('start-workout-set-btn');
+        const stopWorkoutSetBtn = document.getElementById('stop-workout-set-btn'); 
+        const resetWorkoutSetBtn = document.getElementById('reset-workout-set-btn'); 
+        const durationSelectEl = document.getElementById('set-duration-select'); 
+        const timerDisplay = document.getElementById('set-timer-display');
+        const aiBtn = document.getElementById('get-ai-plan-btn');
+        const quickBtn = document.getElementById('generate-wod-btn');
+        const messageEl = document.getElementById('api-message');
+        const countdownDurationEl = document.getElementById('countdown-duration');
+
+        // Nutrition elements
+        const calculateCaloriesBtn = document.getElementById('calculate-calories-btn');
+        const generateDietBtn = document.getElementById('generate-diet-btn');
+        const healthAnalysis = document.getElementById('health-analysis');
+        const bmiResult = document.getElementById('bmi-result');
+        const bmiValue = document.getElementById('bmi-value');
+        const bmiCategory = document.getElementById('bmi-category');
+        const bmiMarker = document.getElementById('bmi-marker');
+        const idealWeight = document.getElementById('ideal-weight');
+        const idealWeightRange = document.getElementById('ideal-weight-range');
+        const recommendation = document.getElementById('recommendation');
+        const recommendationText = document.getElementById('recommendation-text');
+        const calorieResult = document.getElementById('calorie-result');
+        const calorieValue = document.getElementById('calorie-value');
+        const proteinValue = document.getElementById('protein-value');
+        const carbsValue = document.getElementById('carbs-value');
+        const fatValue = document.getElementById('fat-value');
+        const dietPlanContainer = document.getElementById('diet-plan-container');
+        const dietPlanContent = document.getElementById('diet-plan-content');
+        const dietMessage = document.getElementById('diet-message');
+        const dietMotivationCard = document.getElementById('diet-motivation-card');
+
+        // --- Modal Elements ---
+        const authModal = document.getElementById('auth-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const headerAuthBtn = document.getElementById('header-auth-btn');
+        const footerAuthBtn = document.getElementById('footer-auth-btn');
+        const authModalContent = document.getElementById('auth-modal-content');
+
+        // --- History Modal Elements (NEW) ---
+        const viewHistoryBtn = document.getElementById('view-history-btn');
+        const historyModal = document.getElementById('history-modal');
+        const closeHistoryBtn = document.getElementById('close-history-btn');
+        const historyModalContent = document.getElementById('history-modal-content');
+        const workoutHistoryList = document.getElementById('workout-history-list');
+        const userIdDisplay = document.getElementById('user-id-display');
+        
+        // --- Motivational Quotes (Synctactic Strength Theme) ---
+        const motivationalQuotes = [
+            "Syntax is strength. Reps are results.",
+            "Your next rep starts now. Focus.",
+            "The code never lies. Neither does the effort.",
+            "Push past the parse errors. Achieve full compilation.",
+            "Maximize your throughput. Minimize your rest.",
+            "If it doesn't challenge you, it doesn't change you.",
+            "Discipline equals freedom. Start the set.",
+            "The final lift is always in your mind.",
+            "Commit the change. Feel the burn.",
+            "One step back, two steps forward. Never quit."
+        ];
+
+        // --- Nutrition Quotes ---
+        const nutritionQuotes = [
+            "You can't out-train a bad diet.",
+            "Food is fuel, not therapy.",
+            "Abs are made in the kitchen.",
+            "Eat for the body you want, not the body you have.",
+            "Nutrition is the foundation of all physical progress.",
+            "Your body is a reflection of your lifestyle choices.",
+            "Healthy eating is a form of self-respect.",
+            "Food is not just calories, it's information.",
+            "The food you eat can be either the safest form of medicine or the slowest form of poison.",
+            "Don't dig your grave with your own knife and fork."
+        ];
+
+        // --- UI / Auth Handlers ---
+
+        // Updates the header/footer buttons based on the login state
+        const updateUserUI = () => {
+            const userId = 'N/A';
+            userIdDisplay.textContent = `Your User ID: ${userId}`;
+
+            if (currentUserName) {
+                const firstName = currentUserName.split(' ')[0];
+                const welcomeText = `Welcome, ${firstName}`;
+                headerAuthBtn.textContent = welcomeText;
+                headerAuthBtn.classList.remove('bg-accent-red');
+                headerAuthBtn.classList.add('bg-white', 'text-dark-primary');
+                
+                footerAuthBtn.textContent = welcomeText;
+                footerAuthBtn.classList.remove('bg-accent-red');
+                footerAuthBtn.classList.add('bg-white', 'text-dark-primary', 'text-base', 'px-4');
+
+                // If logged in, clicking the button should eventually lead to a profile, not the modal
+                headerAuthBtn.removeEventListener('click', openAuthModal);
+                footerAuthBtn.removeEventListener('click', openAuthModal);
+            } else {
+                headerAuthBtn.textContent = 'REGISTER';
+                headerAuthBtn.classList.add('bg-accent-red');
+                headerAuthBtn.classList.remove('bg-white', 'text-dark-primary');
+
+                footerAuthBtn.textContent = 'Secure Your Spot (Register Now)';
+                footerAuthBtn.classList.add('bg-accent-red');
+                footerAuthBtn.classList.remove('bg-white', 'text-dark-primary', 'text-base', 'px-4');
+
+                headerAuthBtn.addEventListener('click', openAuthModal);
+                footerAuthBtn.addEventListener('click', openAuthModal);
+            }
+        };
+
+
+        // --- Auth Modal Logic ---
+        const openAuthModal = () => {
+            authModal.style.display = 'flex';
+            setTimeout(() => {
+                authModalContent.classList.remove('scale-95');
+                authModalContent.classList.add('scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        const closeAuthModal = () => {
+            authModalContent.classList.remove('scale-100');
+            authModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                authModal.style.display = 'none';
+            }, 300);
+            document.body.style.overflow = '';
+        }
+
+        // --- History Modal Logic (NEW) ---
+        const openHistoryModal = () => {
+            historyModal.style.display = 'flex';
+            setTimeout(() => {
+                historyModalContent.classList.remove('scale-95');
+                historyModalContent.classList.add('scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        const closeHistoryModal = () => {
+            historyModalContent.classList.remove('scale-100');
+            historyModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                historyModal.style.display = 'none';
+            }, 300);
+            document.body.style.overflow = '';
+        }
+        
+        // --- Motivation Logic ---
+        const setMotivationQuote = (workoutName, details) => {
+             let quoteText;
+             // Only format details if they are meaningful, not the initial placeholder
+             let detailsText = (details && details !== 'Initialize Your Workout.') 
+                 ? `<span class="block mt-4 text-sm font-normal text-gray-400 border-t border-gray-700 pt-4 whitespace-pre-line">${details}</span>` 
+                 : `<span class="block mt-4 text-sm font-normal text-gray-400 border-t border-gray-700 pt-4">Generate a plan to see your motivation details here!</span>`;
+             
+             if (currentUserName) {
+                const firstName = currentUserName.split(' ')[0];
+                quoteText = `You got this, ${firstName}! Nothing is impossible.`;
+             } else {
+                 const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+                 quoteText = motivationalQuotes[randomIndex];
+             }
+             
+             motivationCardEl.innerHTML = `
+                 <div class="flex flex-col">
+                    <p class="text-xl font-bold text-accent-light">"${quoteText}"</p>
+                    ${detailsText}
+                 </div>
+             `;
+        }
+
+        const updateWODDisplay = (workoutName, equipment, details) => {
+            equipmentEl.textContent = `EQUIPMENT: ${equipment.toUpperCase()}`;
+            nameEl.textContent = workoutName;
+            detailsEl.textContent = details;
+            
+            // Store details for the quote box
+            currentWorkoutDetails = details;
+            
+            // Update quote box with workout info and personalized message
+            setMotivationQuote(workoutName, currentWorkoutDetails); 
+
+            // Enable start button and reset timer
+            resetTimer(); 
+        };
+        
+        // --- Timer Logic ---
+
+        // Helper function to format seconds into MM:SS
+        const formatTime = (seconds) => {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        // Function to update duration from selector
+        const updateSetDuration = () => {
+            currentSetDuration = parseInt(durationSelectEl.value, 10);
+            resetTimer(); // Reset the timer when duration changes
+        };
+
+        // Function to stop/pause the timer (isPause=false means a full stop, not just pausing for resumption)
+        const stopTimer = (isPause = true) => {
+            if (setTimerInterval) {
+                clearInterval(setTimerInterval);
+                setTimerInterval = null;
+            }
+            
+            // If it's a pause event, enable start button for resumption
+            if (isPause) {
+                startWorkoutSetBtn.disabled = false;
+                stopWorkoutSetBtn.disabled = true;
+            }
+        }
+
+        // Function to reset the timer to the selected duration
+        const resetTimer = () => {
+            stopTimer(false); // Stop the interval, but don't re-enable Start/Pause based on 'pause' state
+            
+            timeLeft = currentSetDuration;
+            timerDisplay.textContent = formatTime(timeLeft);
+            timerDisplay.classList.remove('text-danger', 'animate-pulse'); // Clear any time-up animation
+
+            // Enable start button and disable stop button
+            startWorkoutSetBtn.disabled = false;
+            stopWorkoutSetBtn.disabled = true;
+
+            // Ensure quote reverts to workout details
+            setMotivationQuote(nameEl.textContent, currentWorkoutDetails); 
+        }
+        
+        // Function to save workout history to the PUBLIC log
+        const saveWorkoutToHistory = async () => {
+            const userId = 'demo-user';
+            const userName = currentUserName || 'Anonymous Athlete';
+
+            try {
+                // Create a new history item
+                const listItem = document.createElement('div');
+                listItem.className = 'history-item text-sm text-gray-200 hover:bg-dark-primary transition rounded-lg px-2';
+                
+                const date = new Date();
+                const dateString = date.toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const durationFormatted = formatTime(currentSetDuration);
+                
+                // Get the user identifier. Use the full name if available, otherwise the full UID.
+                const userDisplay = userName && userName !== 'Anonymous Athlete' 
+                    ? userName : userId;
+
+                listItem.innerHTML = `
+                    <span class="font-semibold text-accent-light break-words">${nameEl.textContent}</span>
+                    <span class="text-center font-mono text-gray-300">${durationFormatted}</span>
+                    <span class="text-center text-xs text-gray-400 font-mono break-all">${userDisplay}</span>
+                    <span class="text-xs text-gray-500 text-center">${dateString}</span>
+                `;
+                
+                // Add to the top of the list
+                workoutHistoryList.insertBefore(listItem, workoutHistoryList.firstChild);
+                
+                console.log("Workout saved to history successfully!");
+            } catch (e) {
+                console.error("Error adding document to history: ", e);
+            }
+        }
+
+        const startTimer = () => {
+            if (setTimerInterval) {
+                // Already running
+                return;
+            }
+            
+            startWorkoutSetBtn.disabled = true;
+            stopWorkoutSetBtn.disabled = false;
+            
+            const updateDisplay = () => {
+                timerDisplay.textContent = formatTime(timeLeft);
+            };
+            
+            updateDisplay(); // Initial display
+
+            setTimerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+
+                if (timeLeft <= 0) {
+                    stopTimer(false); // Stop fully
+                    timerDisplay.textContent = "TIME'S UP!";
+                    timerDisplay.classList.add('text-danger', 'animate-pulse');
+                    
+                    // SAVE WORKOUT HERE!
+                    saveWorkoutToHistory();
+
+                    setTimeout(() => {
+                        resetTimer(); // Reset to selected duration after time up alert
+                    }, 2000);
+                }
+            }, 1000);
+        };
+
+        // --- Countdown Timer Logic ---
+        const updateCountdown = () => {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            currentCountdownDays = parseInt(countdownDurationEl.value, 10);
+            
+            // Set target date based on selected days
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + currentCountdownDays);
+            const countDownDate = targetDate.getTime();
+
+            const competitionTimerDisplay = document.getElementById('timer-display');
+            const blocks = [
+                { id: 'days', label: 'Days' }, { id: 'hours', label: 'Hours' }, 
+                { id: 'minutes', label: 'Minutes' }, { id: 'seconds', label: 'Seconds' }
+            ];
+
+            competitionTimerDisplay.innerHTML = blocks.map(block => `
+                <div class="bg-dark-primary p-4 rounded-lg border-b-4 border-accent-red/70">
+                    <div id="${block.id}" class="text-5xl md:text-6xl font-extrabold text-white leading-none mb-1">--</div>
+                    <div class="text-sm uppercase tracking-widest text-gray-400">${block.label}</div>
+                </div>
+            `).join('');
+
+            countdownInterval = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = countDownDate - now;
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById("days").innerHTML = days.toString().padStart(2, '0');
+                document.getElementById("hours").innerHTML = hours.toString().padStart(2, '0');
+                document.getElementById("minutes").innerHTML = minutes.toString().padStart(2, '0');
+                document.getElementById("seconds").innerHTML = seconds.toString().padStart(2, '0');
+
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    competitionTimerDisplay.innerHTML = '<div class="sm:col-span-4 text-center text-4xl font-black text-red-500">COMPETITION LIVE!</div>';
+                }
+            }, 1000);
+        };
+
+        // --- Nutrition Logic ---
+        const calculateCalories = () => {
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const age = parseInt(document.getElementById('age').value);
+            const gender = document.getElementById('gender').value;
+            const activityLevel = parseFloat(document.getElementById('activity-level').value);
+            
+            if (!weight || !height || !age) {
+                dietMessage.textContent = "Please fill in all required fields";
+                dietMessage.classList.add('text-danger');
+                return;
+            }
+            
+            // Calculate BMI
+            const heightInMeters = height / 100;
+            const bmi = weight / (heightInMeters * heightInMeters);
+            const roundedBmi = Math.round(bmi * 10) / 10;
+            
+            // Determine BMI category
+            let bmiCategoryText, bmiColor;
+            if (bmi < 18.5) {
+                bmiCategoryText = "Underweight";
+                bmiColor = "text-blue-400";
+                userGoal = 'gain';
+            } else if (bmi < 25) {
+                bmiCategoryText = "Normal weight";
+                bmiColor = "text-green-400";
+                userGoal = 'maintain';
+            } else if (bmi < 30) {
+                bmiCategoryText = "Overweight";
+                bmiColor = "text-yellow-400";
+                userGoal = 'lose';
+            } else {
+                bmiCategoryText = "Obese";
+                bmiColor = "text-red-400";
+                userGoal = 'lose';
+            }
+            
+            // Calculate ideal weight range (BMI 18.5 to 24.9)
+            const minIdealWeight = 18.5 * (heightInMeters * heightInMeters);
+            const maxIdealWeight = 24.9 * (heightInMeters * heightInMeters);
+            
+            // Calculate BMR using Mifflin-St Jeor Equation
+            let bmr;
+            if (gender === 'male') {
+                bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+            } else {
+                bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+            }
+            
+            // Calculate TDEE (Total Daily Energy Expenditure)
+            let tdee = bmr * activityLevel;
+            
+            // Adjust based on BMI and goal
+            let calorieTarget;
+            let recommendationMessage;
+            
+            if (userGoal === 'lose') {
+                calorieTarget = tdee - 500; // 500 calorie deficit for weight loss
+                recommendationMessage = `Based on your BMI of ${roundedBmi} (${bmiCategoryText}), we recommend a weight loss plan. Aim to lose 0.5-1kg per week.`;
+            } else if (userGoal === 'gain') {
+                calorieTarget = tdee + 500; // 500 calorie surplus for weight gain
+                recommendationMessage = `Based on your BMI of ${roundedBmi} (${bmiCategoryText}), we recommend a weight gain plan. Aim to gain 0.25-0.5kg per week.`;
+            } else {
+                calorieTarget = tdee; // Maintenance
+                recommendationMessage = `Based on your BMI of ${roundedBmi} (${bmiCategoryText}), we recommend a maintenance plan to keep your current weight.`;
+            }
+            
+            // Calculate macronutrient breakdown
+            const proteinGrams = Math.round((weight * 2.2) * 1.2); // 1.2g per kg of body weight
+            const proteinCalories = proteinGrams * 4;
+            
+            const fatGrams = Math.round((calorieTarget * 0.25) / 9); // 25% of calories from fat
+            const fatCalories = fatGrams * 9;
+            
+            const remainingCalories = calorieTarget - proteinCalories - fatCalories;
+            const carbsGrams = Math.round(remainingCalories / 4);
+            
+            // Update UI with BMI results
+            bmiValue.textContent = roundedBmi;
+            bmiCategory.textContent = bmiCategoryText;
+            bmiCategory.className = `text-sm mt-1 ${bmiColor}`;
+            
+            // Position BMI marker on the scale (BMI range: 15 to 40)
+            const bmiPosition = ((bmi - 15) / (40 - 15)) * 100;
+            bmiMarker.style.left = `${Math.min(Math.max(bmiPosition, 0), 100)}%`;
+            
+            // Update ideal weight
+            idealWeightRange.textContent = `${Math.round(minIdealWeight)}kg - ${Math.round(maxIdealWeight)}kg`;
+            
+            // Update recommendation
+            recommendationText.textContent = recommendationMessage;
+            
+            // Update calorie results
+            calorieValue.textContent = Math.round(calorieTarget);
+            proteinValue.textContent = `${proteinGrams}g`;
+            carbsValue.textContent = `${carbsGrams}g`;
+            fatValue.textContent = `${fatGrams}g`;
+            
+            // Show all result sections
+            bmiResult.classList.remove('hidden');
+            idealWeight.classList.remove('hidden');
+            recommendation.classList.remove('hidden');
+            calorieResult.classList.remove('hidden');
+            generateDietBtn.disabled = false;
+            
+            dietMessage.textContent = "Health analysis completed successfully!";
+            dietMessage.classList.remove('text-danger');
+            dietMessage.classList.add('text-accent-green');
+            
+            // Update diet motivation
+            const randomIndex = Math.floor(Math.random() * nutritionQuotes.length);
+            dietMotivationCard.innerHTML = `
+                <div class="flex flex-col">
+                    <p class="text-xl font-bold text-accent-green">"${nutritionQuotes[randomIndex]}"</p>
+                    <span class="block mt-4 text-sm font-normal text-gray-400 border-t border-gray-700 pt-4">
+                        Your BMI: ${roundedBmi} (${bmiCategoryText}) | Goal: ${userGoal === 'lose' ? 'Weight Loss' : userGoal === 'gain' ? 'Weight Gain' : 'Maintenance'}
+                    </span>
+                </div>
+            `;
+        };
+
+        const generateDietPlan = () => {
+            const calories = parseInt(calorieValue.textContent);
+            
+            dietMessage.textContent = "Generating your personalized diet plan...";
+            dietMessage.classList.add('text-accent-green');
+            
+            // Simulate API delay
+            setTimeout(() => {
+                // Mock AI diet responses based on goal
+                const dietPlans = {
+                    lose: `WEIGHT LOSS DIET PLAN (${calories} calories)
+
+BREAKFAST (approx. 400 calories):
+- 2 scrambled eggs with spinach and mushrooms
+- 1 slice whole grain toast
+- 1/2 avocado
+- Black coffee or green tea
+
+LUNCH (approx. 500 calories):
+- Grilled chicken breast (150g)
+- Large mixed green salad with vegetables
+- 2 tbsp light vinaigrette dressing
+- 1/2 cup quinoa
+
+DINNER (approx. 450 calories):
+- Baked salmon (150g)
+- Steamed broccoli and asparagus
+- 1 small sweet potato
+
+SNACKS (approx. 150 calories):
+- Greek yogurt (100g)
+- Handful of almonds (10-12)
+- Apple
+
+HYDRATION:
+- Drink 3-4 liters of water daily
+- Herbal teas allowed
+
+NOTES:
+- Limit processed foods and sugars
+- Focus on lean proteins and fibrous vegetables
+- Eat slowly and mindfully
+- Consider intermittent fasting (16:8) if appropriate`,
+                    
+                    maintain: `MAINTENANCE DIET PLAN (${calories} calories)
+
+BREAKFAST (approx. 500 calories):
+- 3-egg omelette with cheese and vegetables
+- 2 slices whole grain toast with butter
+- 1 serving of fruit (banana or berries)
+- Coffee with milk
+
+LUNCH (approx. 600 calories):
+- Chicken or tuna salad wrap
+- Side of roasted vegetables
+- 1 cup brown rice or quinoa
+- 1 serving of fruit
+
+DINNER (approx. 550 calories):
+- Lean protein of choice (beef, chicken, fish) - 200g
+- 2 servings of vegetables
+- 1 medium potato or 1 cup whole grain pasta
+
+SNACKS (approx. 350 calories):
+- Protein shake
+- Greek yogurt with honey
+- Mixed nuts and dried fruit
+- Rice cakes with peanut butter
+
+HYDRATION:
+- Drink 2-3 liters of water daily
+- Limit sugary drinks
+
+NOTES:
+- Balanced macronutrient intake
+- Include variety for nutritional completeness
+- Listen to hunger and fullness cues
+- Regular exercise to maintain muscle mass`,
+                    
+                    gain: `MUSCLE GAIN DIET PLAN (${calories} calories)
+
+BREAKFAST (approx. 600 calories):
+- 4-egg scramble with cheese
+- 2 slices whole grain toast with avocado
+- 1 cup oatmeal with berries and honey
+- Glass of milk or protein shake
+
+LUNCH (approx. 700 calories):
+- Large chicken breast (200g)
+- 1.5 cups brown rice or quinoa
+- Steamed vegetables with olive oil
+- Side salad
+
+DINNER (approx. 650 calories):
+- Salmon or lean steak (200g)
+- 1 large sweet potato
+- 2 servings of green vegetables
+- Whole grain roll
+
+SNACKS (approx. 450 calories):
+- Protein shake with banana
+- Greek yogurt with granola
+- Peanut butter sandwich
+- Handful of mixed nuts and dried fruit
+
+POST-WORKOUT:
+- Protein shake within 30 minutes of training
+- Complex carbs to replenish glycogen
+
+HYDRATION:
+- Drink 3-4 liters of water daily
+- Electrolytes during intense training
+
+NOTES:
+- Eat every 3-4 hours
+- Focus on protein timing around workouts
+- Don't fear healthy fats and complex carbs
+- Ensure progressive overload in training`
+                };
+                
+                dietPlanContent.textContent = dietPlans[userGoal];
+                dietPlanContainer.classList.remove('hidden');
+                
+                dietMessage.textContent = "Diet plan generated successfully!";
+                
+                // Scroll to diet plan
+                document.getElementById('nutrition').scrollIntoView({ behavior: 'smooth' });
+            }, 2000);
+        };
+
+        // --- WOD Logic ---
+        const physicalWorkouts = [
+            { name: "Bodyweight Squats (Quick Rep)", bodyPart: "Legs", equipment: "None", details: "Perform 3 sets of 20 reps. Focus on depth and form. (Rest 60 seconds per set)" },
+            { name: "Dumbbell Lunges (Quick Rep)", bodyPart: "Legs", equipment: "Dumbbells", details: "Perform 3 sets of 10-12 reps per leg. Keep your chest up and core tight. (Rest 60 seconds per set)" },
+            { name: "Dumbbell Shoulder Press (Quick Rep)", bodyPart: "Upper Body", equipment: "Dumbbells", details: "Perform 3 sets of 10 reps. Press straight overhead, controlling the weight down. (Rest 60 seconds per set)" },
+            { name: "Pushups (Quick Rep)", bodyPart: "Upper Body", equipment: "None", details: "Perform 3 sets to failure. Maintain a straight line from head to heels. (Rest 60 seconds per set)" },
+            { name: "Dumbbell Bench Press (Quick Rep)", bodyPart: "Upper Body", equipment: "Dumbbells", details: "Perform 4 sets of 8 reps. Control the descent and drive up powerfully. (Rest 60 seconds per set)" },
+            { name: "Plank Hold (Quick Rep)", bodyPart: "Core", equipment: "Mat", details: "Perform 3 sets, holding for 60 seconds each. Keep your hips level and squeeze your glutes. (Rest 60 seconds per set)" }, 
+            { name: "Russian Twists (Quick Rep)", bodyPart: "Core", equipment: "Kettlebell", details: "Perform 3 sets of 30 total reps (15 per side). Use the kettlebell for resistance. (Rest 60 seconds per set)" },
+            { name: "Barbell Deadlift (Quick Rep)", bodyPart: "Back", equipment: "Barbell", details: "Perform 3 sets of 8 reps. Keep a flat back and drive through your heels. (Rest 90 seconds per set)" },
+            { name: "Mountain Climbers (Quick Rep)", bodyPart: "Arms", equipment: "None", details: "Perform 3 sets for 45 seconds each. Drive your knees rapidly towards your chest (engaging arms/sholders). (Rest 60 seconds per set)" },
+            { name: "Dumbbell Curls (Quick Rep)", bodyPart: "Arms", equipment: "Dumbbells", details: "Perform 3 sets of 12 reps per arm. Focus on the squeeze at the top. (Rest 60 seconds per set)" },
+        ];
+        
+        const populateFilters = () => {
+            const bodyPartFilter = document.getElementById('body-part-filter');
+            const equipmentFilter = document.getElementById('equipment-filter');
+
+            bodyPartFilter.innerHTML = '<option value="All">Any Body Part</option>';
+            equipmentFilter.innerHTML = '<option value="All">Any Equipment</option>';
+
+            const uniqueBodyParts = [...new Set(physicalWorkouts.map(w => w.bodyPart))];
+            if (!uniqueBodyParts.includes('Full Body')) { uniqueBodyParts.unshift('Full Body'); }
+            if (!uniqueBodyParts.includes('Arms')) { uniqueBodyParts.push('Arms'); }
+
+            uniqueBodyParts.forEach(part => {
+                if (part !== 'All') {
+                    bodyPartFilter.innerHTML += `<option value="${part}">${part}</option>`;
+                }
+            });
+
+            const uniqueEquipment = [...new Set(physicalWorkouts.map(w => w.equipment))];
+
+            uniqueEquipment.forEach(item => {
+                if (item !== 'Any') {
+                    equipmentFilter.innerHTML += `<option value="${item}">${item}</option>`;
+                }
+            });
+        };
+
+        const filterAndGenerateQuickWorkout = () => {
+            const bodyPart = document.getElementById('body-part-filter').value;
+            const equipment = document.getElementById('equipment-filter').value;
+
+            const filteredWorkouts = physicalWorkouts.filter(workout => {
+                const matchesBody = bodyPart === 'All' || workout.bodyPart === bodyPart;
+                const matchesEquipment = equipment === 'All' || workout.equipment === equipment;
+                return matchesBody && matchesEquipment;
+            });
+
+            resetTimer(); 
+            
+            if (filteredWorkouts.length === 0) {
+                equipmentEl.textContent = 'ERROR';
+                nameEl.textContent = 'No Quick Rep Found';
+                const details = 'Try selecting different filters. Your current filter combination yields no quick results.';
+                detailsEl.textContent = details;
+                setMotivationQuote("Need more gear? Try the AI Trainer!", details);
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * filteredWorkouts.length);
+            const workout = filteredWorkouts[randomIndex];
+            
+            updateWODDisplay(workout.name, workout.equipment, workout.details);
+        };
+
+        // --- LLM API Logic (simulated) ---
+        const setUIState = (isLoading, error = null) => {
+            quickBtn.disabled = isLoading;
+            aiBtn.disabled = isLoading;
+            startWorkoutSetBtn.disabled = !isLoading; 
+            stopWorkoutSetBtn.disabled = true; 
+            
+            messageEl.style.display = isLoading || error ? 'block' : 'none';
+            messageEl.className = 'text-center text-sm mt-4 h-5';
+
+            if (isLoading) {
+                messageEl.textContent = 'Generating custom plan...';
+                messageEl.classList.add('text-accent-red', 'animate-loading');
+                nameEl.textContent = 'TRAINER ONLINE...';
+                detailsEl.textContent = 'Synthesizing data based on your requirements. Stand by.';
+                equipmentEl.textContent = 'EQUIPMENT: LOADING...';
+                setMotivationQuote("Processing... Wait for the compiler to finish.", 'Synthesizing data based on your requirements. Stand by.');
+            } else if (error) {
+                messageEl.textContent = `Error: ${error}`;
+                messageEl.classList.add('text-danger', 'font-bold');
+                nameEl.textContent = 'GENERATION FAILED';
+                detailsEl.textContent = 'Could not contact the AI Trainer. Please check your connection or try again.';
+                equipmentEl.textContent = 'ERROR';
+                setMotivationQuote("API Failed. Must be a network timeout error.", 'Could not contact the AI Trainer. Please check your connection or try again.');
+            } else {
+                messageEl.textContent = '';
+            }
+        };
+
+        const generateAITrainerPlan = async () => {
+            const bodyPart = document.getElementById('body-part-filter').value;
+            const equipment = document.getElementById('equipment-filter').value;
+
+            resetTimer();
+            setUIState(true);
+
+            // Simulate API delay
+            setTimeout(() => {
+                // Mock AI response
+                const mockResponses = [
+                    {
+                        title: "Upper Body Power Circuit",
+                        equipment: "Dumbbells",
+                        details: "1. Dumbbell Bench Press: 4 sets of 8-10 reps. Focus on controlled movements.\n2. Dumbbell Rows: 3 sets of 10-12 reps per side. Keep your back straight.\n3. Dumbbell Shoulder Press: 3 sets of 10 reps. Press overhead with control."
+                    },
+                    {
+                        title: "Leg Day Dominance",
+                        equipment: "Barbell",
+                        details: "1. Barbell Squats: 4 sets of 8 reps. Go deep but maintain form.\n2. Barbell Lunges: 3 sets of 10 reps per leg. Keep your chest up.\n3. Barbell Deadlifts: 3 sets of 8 reps. Focus on proper hip hinge."
+                    },
+                    {
+                        title: "Core Crusher",
+                        equipment: "Mat",
+                        details: "1. Plank: 3 sets of 60 seconds. Keep your body in a straight line.\n2. Leg Raises: 3 sets of 15 reps. Control the movement.\n3. Russian Twists: 3 sets of 20 reps (10 per side). Engage your obliques."
+                    }
+                ];
+                
+                const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+                
+                updateWODDisplay(randomResponse.title, randomResponse.equipment, randomResponse.details);
+                setUIState(false);
+            }, 2000);
+        };
+
+        // --- Main Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Modal Event Listeners ---
+            headerAuthBtn.addEventListener('click', openAuthModal);
+            footerAuthBtn.addEventListener('click', openAuthModal);
+            closeModalBtn.addEventListener('click', closeAuthModal);
+            authModal.addEventListener('click', (e) => {
+                if (e.target === authModal) {
+                    closeAuthModal();
+                }
+            });
+
+            // --- History Modal Listeners ---
+            viewHistoryBtn.addEventListener('click', openHistoryModal);
+            closeHistoryBtn.addEventListener('click', closeHistoryModal);
+            historyModal.addEventListener('click', (e) => {
+                if (e.target === historyModal) {
+                    closeHistoryModal();
+                }
+            });
+
+            // --- Countdown Duration Listener ---
+            countdownDurationEl.addEventListener('change', updateCountdown);
+
+            // --- Nutrition Listeners ---
+            calculateCaloriesBtn.addEventListener('click', calculateCalories);
+            generateDietBtn.addEventListener('click', generateDietPlan);
+
+            // Stop form submission (since we don't have a backend)
+            const loginForm = document.getElementById('login-form');
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                console.log('Registration attempt initiated! (Placeholder action)');
+                // Simulate login with full name
+                const fullNameInput = document.getElementById('full-name');
+                currentUserName = fullNameInput.value.trim() || 'Anonymous Athlete'; // Use the full name
+                
+                updateUserUI();
+                setMotivationQuote(nameEl.textContent, currentWorkoutDetails);
+                closeAuthModal();
+            });
+
+            // Initialize Competition Countdown Timer
+            updateCountdown();
+
+            // Initialize UI and WOD section
+            updateUserUI();
+            populateFilters();
+            
+            // Event Listeners for WOD and Timer Controls
+            quickBtn.addEventListener('click', filterAndGenerateQuickWorkout);
+            aiBtn.addEventListener('click', generateAITrainerPlan);
+
+            // TIMER LISTENERS
+            durationSelectEl.addEventListener('change', updateSetDuration);
+            startWorkoutSetBtn.addEventListener('click', startTimer);
+            stopWorkoutSetBtn.addEventListener('click', () => stopTimer(true)); // Pass true for pause
+            resetWorkoutSetBtn.addEventListener('click', resetTimer); 
+            
+            // Set initial state
+            updateSetDuration(); 
+            filterAndGenerateQuickWorkout(); 
+        });
+    </script>
+</body>
+</html>
